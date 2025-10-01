@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"="width=device-width, initial-scale=1.0">
+    <title>Personal Health Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+    <div id="toast-container"></div>
+    
+    <div id="auth-container">
+        <div class="auth-card">
+            <h1>Personal Health Tracker</h1>
+            <div id="login-form" class="auth-form">
+                <h2>Login</h2>
+                <input type="text" id="login-username" placeholder="Username" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <button onclick="login()">Login</button>
+                <p>Don't have an account? <a href="#" onclick="showRegister()">Register</a></p>
+                <p class="hint">Test account: john_doe / password123</p>
+            </div>
+            <div id="register-form" class="auth-form" style="display: none;">
+                <h2>Register</h2>
+                <input type="text" id="register-username" placeholder="Username" required>
+                <input type="email" id="register-email" placeholder="Email" required>
+                <input type="text" id="register-displayname" placeholder="Display Name" required>
+                <input type="password" id="register-password" placeholder="Password" required>
+                <button onclick="register()">Register</button>
+                <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="app-container" style="display: none;">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>Health Tracker</h2>
+                <p id="user-display-name"></p>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#" onclick="showSection('dashboard')" class="active">Dashboard</a></li>
+                <li><a href="#" onclick="showSection('steps')">Steps</a></li>
+                <li><a href="#" onclick="showSection('calories')">Calories</a></li>
+                <li><a href="#" onclick="showSection('history')">History</a></li>
+                <li><a href="#" onclick="showSection('friends')">Friends & Leaderboard</a></li>
+                <li><a href="#" onclick="showSection('reports')">Reports</a></li>
+                <li><a href="#" onclick="showSection('settings')">Settings</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </nav>
+        
+        <main class="main-content">
+            <section id="dashboard-section" class="section active">
+                <h1>Dashboard</h1>
+                
+                <div class="cards-grid">
+                    <div class="card">
+                        <h3>Today's Steps</h3>
+                        <div class="stat-value" id="today-steps">0</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="steps-progress"></div>
+                        </div>
+                        <p class="progress-text"><span id="steps-progress-text">0%</span> of goal</p>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>Today's Calories</h3>
+                        <div class="stat-value" id="today-calories">0</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill calories" id="calories-progress"></div>
+                        </div>
+                        <p class="progress-text"><span id="calories-progress-text">0%</span> of goal</p>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>Current Streak</h3>
+                        <div class="stat-value" id="current-streak">0</div>
+                        <p class="stat-label">days</p>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>Longest Streak</h3>
+                        <div class="stat-value" id="longest-streak">0</div>
+                        <p class="stat-label">days</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>AI Recommendations</h3>
+                    <div id="ai-suggestions"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>Quick Add</h3>
+                    <div class="quick-add-forms">
+                        <div class="form-group">
+                            <label>Steps Today</label>
+                            <input type="number" id="quick-steps" placeholder="0" min="0">
+                            <button onclick="saveQuickSteps()">Save Steps</button>
+                        </div>
+                        <div class="form-group">
+                            <label>Add Meal</label>
+                            <input type="text" id="quick-meal-name" placeholder="Meal name">
+                            <input type="number" id="quick-meal-calories" placeholder="Calories" min="0">
+                            <button onclick="saveQuickMeal()">Add Meal</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Today's Meals</h3>
+                    <div id="today-meals-list"></div>
+                </div>
+            </section>
+            
+            <section id="steps-section" class="section">
+                <h1>Step Tracker</h1>
+                
+                <div class="card">
+                    <h3>Log Steps</h3>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="steps-date">
+                        <label>Steps</label>
+                        <input type="number" id="steps-input" placeholder="Enter steps" min="0">
+                        <button onclick="saveSteps()">Save Steps</button>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Steps Chart (Last 14 Days)</h3>
+                    <canvas id="steps-chart"></canvas>
+                </div>
+                
+                <div class="card">
+                    <h3>Steps Prediction (Next 3 Days)</h3>
+                    <canvas id="steps-prediction-chart"></canvas>
+                </div>
+            </section>
+            
+            <section id="calories-section" class="section">
+                <h1>Calorie Tracker</h1>
+                
+                <div class="card">
+                    <h3>Add Meal</h3>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="meal-date">
+                        <label>Meal Name</label>
+                        <input type="text" id="meal-name" placeholder="e.g., Breakfast, Lunch">
+                        <label>Calories</label>
+                        <input type="number" id="meal-calories" placeholder="Enter calories" min="0">
+                        <button onclick="saveMeal()">Add Meal</button>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Calories Chart (Last 14 Days)</h3>
+                    <canvas id="calories-chart"></canvas>
+                </div>
+                
+                <div class="card">
+                    <h3>Calorie Prediction (Next 3 Days)</h3>
+                    <canvas id="calories-prediction-chart"></canvas>
+                </div>
+            </section>
+            
+            <section id="history-section" class="section">
+                <h1>Activity History</h1>
+                
+                <div class="card">
+                    <h3>Recent Entries (Last 30 Days)</h3>
+                    <div id="history-list"></div>
+                </div>
+            </section>
+            
+            <section id="friends-section" class="section">
+                <h1>Friends & Leaderboard</h1>
+                
+                <div class="card">
+                    <h3>Add Friend</h3>
+                    <div class="form-group">
+                        <label>Search Username</label>
+                        <input type="text" id="friend-search" placeholder="Search for friends">
+                        <div id="friend-search-results"></div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Leaderboard (Weekly Steps)</h3>
+                    <div id="leaderboard-list"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>Friends Activity Today</h3>
+                    <div id="friends-activity-list"></div>
+                </div>
+            </section>
+            
+            <section id="reports-section" class="section">
+                <h1>Monthly Reports</h1>
+                
+                <div class="card">
+                    <h3>Generate Report</h3>
+                    <div class="form-group">
+                        <label>Month</label>
+                        <input type="month" id="report-month">
+                        <button onclick="generateReport()">Generate Report</button>
+                    </div>
+                </div>
+                
+                <div id="report-container"></div>
+            </section>
+            
+            <section id="settings-section" class="section">
+                <h1>Settings</h1>
+                
+                <div class="card">
+                    <h3>Update Goals</h3>
+                    <div class="form-group">
+                        <label>Daily Steps Goal</label>
+                        <input type="number" id="daily-steps-goal" min="0">
+                        <label>Weekly Steps Goal</label>
+                        <input type="number" id="weekly-steps-goal" min="0">
+                        <label>Daily Calories Goal</label>
+                        <input type="number" id="daily-calories-goal" min="0">
+                        <label>Weekly Calories Goal</label>
+                        <input type="number" id="weekly-calories-goal" min="0">
+                        <button onclick="updateTargets()">Update Targets</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
