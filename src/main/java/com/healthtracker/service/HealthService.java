@@ -103,7 +103,7 @@ public class HealthService {
     public Map<String, Object> getSummary(String username) {
         User user = getUser(username);
         Target target = targetRepository.findByUser(user)
-                .orElse(createDefaultTarget(user));
+                .orElseGet(() -> createDefaultTarget(user));
         
         List<HealthEntry> entries = getEntries(username, 14);
         
@@ -238,12 +238,23 @@ public class HealthService {
         
         return activities;
     }
-    
+
     public Target updateTargets(String username, Map<String, Integer> targetsMap) {
         User user = getUser(username);
-        Target target = targetRepository.findByUser(user)
-                .orElse(createDefaultTarget(user));
         
+        // Find existing target or create new one WITHOUT saving it yet
+        Target target = targetRepository.findByUser(user)
+                .orElseGet(() -> {
+                    Target newTarget = new Target();
+                    newTarget.setUser(user);
+                    newTarget.setDailyStepsGoal(10000);
+                    newTarget.setWeeklyStepsGoal(70000);
+                    newTarget.setDailyCaloriesGoal(2000);
+                    newTarget.setWeeklyCaloriesGoal(14000);
+                    return newTarget;
+                });
+        
+        // Update the target values
         if (targetsMap.containsKey("dailyStepsGoal")) {
             target.setDailyStepsGoal(targetsMap.get("dailyStepsGoal"));
         }
@@ -257,13 +268,14 @@ public class HealthService {
             target.setWeeklyCaloriesGoal(targetsMap.get("weeklyCaloriesGoal"));
         }
         
+        // Save only once here
         return targetRepository.save(target);
     }
     
     public Map<String, Object> getMonthlyReport(String username, int year, int month) {
         User user = getUser(username);
         Target target = targetRepository.findByUser(user)
-                .orElse(createDefaultTarget(user));
+                .orElseGet(() -> createDefaultTarget(user));
         
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1);
@@ -312,6 +324,12 @@ public class HealthService {
     }
     
     private Target createDefaultTarget(User user) {
+        // Check if target already exists to prevent duplicates
+        Optional<Target> existing = targetRepository.findByUser(user);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        
         Target target = new Target();
         target.setUser(user);
         target.setDailyStepsGoal(10000);
