@@ -65,6 +65,39 @@ curl -X POST https://your-replit-url.repl.co/api/auth/login \
 
 ---
 
+---
+
+## 🧠 AI & Machine Learning Model
+
+Our platform uses a lightweight **AI module** built using `Apache Commons Math` for analytics and predictions.
+
+### 🔍 Model Overview
+- **Algorithm:** Linear Regression (Trend Forecasting)
+- **Purpose:** Predict next 3 days of activity (steps & calories)
+- **Accuracy Metric:** R² Confidence Score (0–100%)
+- **Data Used:** Past 14 days of user activity (steps, calories)
+- **Library:** Apache Commons Math 3.6.1
+
+### 🧩 Workflow
+1. Collect user’s last 14 days of entries  
+2. Apply Linear Regression → `y = mx + b`  
+3. Generate 3-day predictions (steps & calories)  
+4. Calculate confidence score using R²  
+5. Detect anomalies using Z-Score (>2.5σ)  
+6. Generate smart recommendations based on trends  
+
+### ⚙️ Example Output
+```json
+{
+  "predictions": [
+    {"date": "2025-11-13", "steps": 9200, "calories": 2150},
+    {"date": "2025-11-14", "steps": 9500, "calories": 2200},
+    {"date": "2025-11-15", "steps": 9800, "calories": 2250}
+  ],
+  "confidence": 87.5
+}
+
+```
 ## 🏗️ Architecture
 
 ```
